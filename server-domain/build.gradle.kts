@@ -7,14 +7,14 @@ dependencies {
     api(project(":server-core"))
     implementation(project(":server-downloader"))
     implementation("com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751")
-    implementation("com.github.Priveetee.PipePipeExtractor:extractor:4eebe6d405122f0f63b7690c41f88f6d343a66fb")
+    implementation("com.github.TypeType-Video.PipePipeExtractor:extractor:e314015d345a93eaa243a866be2ad4f5d91df14f")
     implementation(project(":server-cache"))
     implementation(project(":server-db"))
-    implementation("org.jetbrains.exposed:exposed-core:1.5.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:1.5.0")
+    implementation("org.jetbrains.exposed:exposed-core:1.5.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.5.1")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testImplementation("io.mockk:mockk:1.14.11")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

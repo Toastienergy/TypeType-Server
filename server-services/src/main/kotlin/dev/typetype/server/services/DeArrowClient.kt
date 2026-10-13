@@ -27,7 +27,7 @@ class DeArrowClient(
                     .execute()
                     .use { response ->
                         when {
-                            response.code == 404 -> null
+                            response.code == HTTP_NOT_FOUND -> null
                             !response.isSuccessful -> throw DeArrowUnavailableException()
                             else -> response.body.string().takeIf { it.isNotBlank() }
                         }
@@ -44,28 +44,29 @@ class DeArrowClient(
     override suspend fun fallbackThumbnail(videoId: String): ByteArray? =
         get("https://i.ytimg.com/vi/$videoId/hqdefault.jpg")
 
-    private suspend fun get(url: String): ByteArray? = withContext(Dispatchers.IO) {
-        limiter.withPermit {
-            runCatching {
-                client.newCall(
-                    request(url),
-                ).execute().use { response ->
-                    if (!response.isSuccessful) return@use null
-                    response.body.bytes().takeIf { it.isNotEmpty() }
-                }
-            }.getOrNull()
-        }
-    }
-
     private fun request(url: String): Request = Request.Builder()
         .url(url)
         .header("User-Agent", USER_AGENT)
         .get()
         .build()
 
+    private suspend fun get(url: String): ByteArray? = withContext(Dispatchers.IO) {
+        limiter.withPermit {
+            try {
+                client.newCall(request(url)).execute().use { response ->
+                    if (!response.isSuccessful) return@use null
+                    response.body.bytes().takeIf { it.isNotEmpty() }
+                }
+            } catch (_: IOException) {
+                null
+            }
+        }
+    }
+
     private companion object {
         private const val MAX_CONCURRENT_REQUESTS = 6
         private const val USER_AGENT = "TypeType-DeArrow/1.0"
+        private const val HTTP_NOT_FOUND = 404
 
         fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(4, TimeUnit.SECONDS)

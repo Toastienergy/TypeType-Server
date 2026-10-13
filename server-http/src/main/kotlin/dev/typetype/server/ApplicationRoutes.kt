@@ -2,6 +2,7 @@ package dev.typetype.server
 
 import dev.typetype.server.routes.adminBugReportRoutes
 import dev.typetype.server.routes.adminAllowListRoutes
+import dev.typetype.server.routes.adminRecommenderRoutes
 import dev.typetype.server.routes.adminRoutes
 import dev.typetype.server.routes.adminRssRoutes
 import dev.typetype.server.routes.adminIdentityRoutes
@@ -10,6 +11,7 @@ import dev.typetype.server.routes.authRoutes
 import dev.typetype.server.routes.accountProfilesRoutes
 import dev.typetype.server.routes.avatarRoutes
 import dev.typetype.server.routes.bulletCommentRoutes
+import dev.typetype.server.routes.youtubeLiveChatRoutes
 import dev.typetype.server.routes.channelRoutes
 import dev.typetype.server.routes.commentRoutes
 import dev.typetype.server.routes.downloaderGatewayRoutes
@@ -95,6 +97,7 @@ fun Application.installApplicationRoutes(
             )
             commentRoutes(svc.commentService, authService, adminSettingsService)
             bulletCommentRoutes(svc.bulletCommentService, authService, adminSettingsService)
+            youtubeLiveChatRoutes(svc.youtubeLiveChatService, authService, adminSettingsService)
         }
         rateLimit(CHANNEL_ZONE) {
             channelRoutes(
@@ -133,6 +136,7 @@ fun Application.installApplicationRoutes(
         )
         accountProfilesRoutes(profileAccountService, authService, authSessionConfig)
         adminRoutes(authService, userAdminService, passwordResetService, adminSettingsService)
+        adminRecommenderRoutes(authService, svc.recommenderServices.adminService)
         adminRssRoutes(svc.rssFeedManagementService, authService)
         adminIdentityRoutes(svc.accountIdentityService, authService)
         adminAllowListRoutes(authService, userAdminService, svc.adminManagedAccessService, svc.adminUserLookupService, svc.allowedChannelsService, svc.allowedPlaylistsService)

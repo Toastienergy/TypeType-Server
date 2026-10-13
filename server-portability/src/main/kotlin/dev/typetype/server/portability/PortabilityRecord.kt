@@ -1,5 +1,6 @@
 package dev.typetype.server.portability
 
+import dev.typetype.server.services.ChannelUrlCanonicalizer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -20,7 +21,7 @@ data class PortabilitySubscription(
     val subscribedAt: Long = 0L,
 ) : PortabilityRecord {
     override val category = PortabilityCategory.SUBSCRIPTIONS
-    override fun stableKey() = channelUrl.trim().lowercase()
+    override fun stableKey() = ChannelUrlCanonicalizer.canonicalize(channelUrl).lowercase()
 }
 
 @Serializable
@@ -143,6 +144,15 @@ data class PortabilitySettings(
 ) : PortabilityRecord {
     override val category = PortabilityCategory.SETTINGS
     override fun stableKey() = "settings"
+}
+
+@Serializable
+@SerialName("recommender")
+data class PortabilityRecommender(
+    val values: JsonObject,
+) : PortabilityRecord {
+    override val category = PortabilityCategory.SETTINGS
+    override fun stableKey() = "recommender"
 }
 
 @Serializable
