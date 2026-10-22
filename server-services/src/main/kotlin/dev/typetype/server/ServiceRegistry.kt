@@ -71,6 +71,7 @@ class ServiceRegistry(
         youtubeProxySelector,
     )
     val youtubeSessionService = extraction.youtubeSessionService
+    val youtubeSessionRefreshService = extraction.youtubeSessionRefreshService
     val bilibiliSessionService = BiliBiliSessionService(
         System.getenv("BILIBILI_SESSION_ENCRYPTION_KEY")?.let { secret ->
             if (secret.length >= 32) BiliBiliSessionCrypto.fromSecret(secret) else null
@@ -124,8 +125,8 @@ class ServiceRegistry(
             SubscriptionFeedCacheInvalidatorImpl(cache, subscriptionFeedService),
         )
     }
-    val notificationsService = NotificationsService(subscriptionFeedService)
     val channelNotificationPreferenceService = ChannelNotificationPreferenceService(subscriptionsService)
+    val notificationsService = NotificationsService(subscriptionFeedService, channelNotificationPreferenceService)
     val pushNotificationService = PushNotificationService(
         subscriptionsService = subscriptionsService,
         subscriptionFeedService = subscriptionFeedService,

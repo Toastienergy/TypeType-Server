@@ -3,10 +3,13 @@ package dev.typetype.server.routes
 import dev.typetype.server.models.ChannelNotificationPreferenceRequest
 import dev.typetype.server.models.ErrorResponse
 import dev.typetype.server.models.PushDeviceRegistrationRequest
+import dev.typetype.server.models.PushDeliveryAcknowledgementRequest
+import dev.typetype.server.services.PushDeliveryAcknowledgementResult
 import dev.typetype.server.services.DeviceRegistrationResult
 import dev.typetype.server.services.PreferenceUpdateResult
 import dev.typetype.server.services.PushNotificationService
 import dev.typetype.server.services.AuthService
+import dev.typetype.server.services.NotificationsService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -19,6 +22,7 @@ import io.ktor.server.routing.put
 internal fun Route.pushNotificationRoutes(
     service: PushNotificationService,
     authService: AuthService,
+    notificationsService: NotificationsService,
 ) {
     get("/notifications/channel-preferences") {
         call.withJwtAuth(authService) { userId ->
@@ -33,7 +37,10 @@ internal fun Route.pushNotificationRoutes(
                     ErrorResponse("Invalid channel notification preference", "push_request_invalid"),
                 )
             when (val result = service.setPreference(userId, request.channelUrl, request.enabled)) {
-                is PreferenceUpdateResult.Updated -> call.respond(result.preference)
+                is PreferenceUpdateResult.Updated -> {
+                    notificationsService.invalidateUnreadCount(userId)
+                    call.respond(result.preference)
+                }
                 PreferenceUpdateResult.NotSubscribed -> call.respond(
                     HttpStatusCode.Conflict,
                     ErrorResponse("Channel is not subscribed", "channel_not_subscribed"),
@@ -72,6 +79,31 @@ internal fun Route.pushNotificationRoutes(
                 DeviceRegistrationResult.LimitReached -> call.respond(
                     HttpStatusCode.Conflict,
                     ErrorResponse("Push device limit reached", "push_device_limit_reached"),
+                )
+            }
+        }
+    }
+    post("/notifications/push/deliveries/acknowledgement") {
+        call.withJwtAuth(authService) { userId ->
+            val request = runCatching { call.receive<PushDeliveryAcknowledgementRequest>() }.getOrNull()
+                ?: return@withJwtAuth call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse("Invalid push delivery acknowledgement", "push_request_invalid"),
+                )
+            when (service.acknowledgeDelivery(userId, request)) {
+                PushDeliveryAcknowledgementResult.Recorded,
+                PushDeliveryAcknowledgementResult.AlreadyRecorded -> call.respond(HttpStatusCode.NoContent)
+                PushDeliveryAcknowledgementResult.InvalidRequest -> call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse("Invalid push delivery acknowledgement", "push_request_invalid"),
+                )
+                PushDeliveryAcknowledgementResult.NotFound -> call.respond(
+                    HttpStatusCode.NotFound,
+                    ErrorResponse("Push delivery not found", "push_delivery_not_found"),
+                )
+                PushDeliveryAcknowledgementResult.Conflict -> call.respond(
+                    HttpStatusCode.Conflict,
+                    ErrorResponse("Push delivery acknowledgement is invalid", "push_acknowledgement_conflict"),
                 )
             }
         }
