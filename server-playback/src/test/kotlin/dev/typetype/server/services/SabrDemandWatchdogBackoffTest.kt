@@ -57,8 +57,9 @@ class SabrDemandFailurePumpTest {
             val holder = holder(session, audio, video)
             holder.requestSegmentDemand(request)
 
+            var pumpRounds = 0
             SabrSessionPump().pumpLoop(
-                isAlive = { holder.pendingSegmentDemandSummary() != null },
+                isAlive = { holder.pendingSegmentDemandSummary() != null && pumpRounds++ < 12 },
                 holder = holder,
                 intervalMs = 100L,
             )
@@ -131,6 +132,8 @@ class SabrDemandFailurePumpTest {
         every { format.itag } returns itag
         every { format.isAudio } returns isAudio
         every { format.bitrate } returns if (isAudio) 128_000 else 2_000_000
+        every { format.lastModified } returns 0L
+        every { format.xtags } returns ""
         return format
     }
 
